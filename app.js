@@ -3,9 +3,11 @@ const express = require('express');
 const mongoose = require('mongoose');
 const { celebrate, Joi, errors } = require('celebrate');
 const cors = require('cors');
+const helmet = require('helmet');
 
 const router = require('./routes');
 const { login, createUser } = require('./controllers/users');
+const mainErrorHandler = require('./middlewares/errors/mainErrorHandler');
 const NotFoundError = require('./middlewares/errors/notFoundError');
 
 const auth = require('./middlewares/auth');
@@ -22,6 +24,7 @@ mongoose.connect('mongodb://localhost:27017/newsdb', {
 });
 
 app.use(cors());
+app.use(helmet());
 
 app.listen(PORT);
 
@@ -41,6 +44,7 @@ app.post('/signup', celebrate({
   body: Joi.object().keys({
     email: Joi.string().required().email(),
     password: Joi.string().required().min(7),
+    name: Joi.string().required().min(2).max(30),
   }),
 }), createUser);
 
@@ -59,17 +63,4 @@ app.use(errorLogger);
 app.use(errors());
 
 // централизованная обработка ошибок. принимает на вход аргумент-ошибку со статусом и сообщением
-app.use((err, req, res, next) => {
-  // если на вход не передана аргумент-ошибка, выставляем по умолчанию ошибку сервера
-  const { statusCode = 500, message } = err;
-
-  res
-    .status(statusCode)
-    .send({
-      message: statusCode === 500
-        ? 'На сервере произошла ошибка'
-        : message,
-    });
-
-  next();
-});
+app.use(mainErrorHandler);

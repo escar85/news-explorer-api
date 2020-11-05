@@ -8,7 +8,7 @@ const NotFoundError = require('../middlewares/errors/notFoundError');
 
 // возвращает данные пользователя при запросе get на роут users/me
 const getUserById = (req, res, next) => {
-  User.findById(req.params.userId).orFail(new NotFoundError('Пользователь с таким id отсутствует'))
+  User.findById(req.user).orFail(new NotFoundError('Пользователь с таким id отсутствует'))
     .then((user) => res.send(user))
     .catch(next);
 };
@@ -18,6 +18,7 @@ const createUser = (req, res, next) => {
   bcrypt.hash(req.body.password, 10)
     .then((hash) => User.create({
       email: req.body.email,
+      name: req.body.name,
       password: hash,
     }))
     .then((user) => {
@@ -36,7 +37,7 @@ const createUser = (req, res, next) => {
 
 const login = (req, res, next) => {
   const { email, password } = req.body;
-  return User.findUserByCredentials(email, password).orFail(new NotFoundError('Пользователь отсутствует. Необходимо зарегистрироваться'))
+  return User.findUserByCredentials(email, password)
     .then((user) => {
       // создаем токен
       const token = jwt.sign(

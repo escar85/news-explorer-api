@@ -1,4 +1,6 @@
 const Article = require('../models/article');
+const ForbiddenError = require('../middlewares/errors/forbiddenError');
+const NotFoundError = require('../middlewares/errors/notFoundError');
 
 const getArticles = (req, res, next) => {
   Article.find({})
@@ -18,13 +20,13 @@ const createArticle = (req, res, next) => {
 };
 
 const deleteArticle = (req, res, next) => {
-  Article.findById(req.params.articleId).orFail()
+  Article.findById(req.params.articleId).select('+owner').orFail(new NotFoundError('Несуществующий Id статьи или статья отсутствует'))
     .then((article) => {
       if (req.user._id.toString() === article.owner.toString()) {
         res.send(article);
         article.remove();
       }
-      // throw new ForbiddenError('Недостаточно прав пользователя для удаления');
+      throw new ForbiddenError('Недостаточно прав пользователя для удаления');
     })
     .catch(next);
 };
