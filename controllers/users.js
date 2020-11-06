@@ -2,7 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 
-const { NODE_ENV, JWT_SECRET } = process.env;
+const JWT_SECRET = require('../config');
 const MongoError = require('../middlewares/errors/mongoError');
 const NotFoundError = require('../middlewares/errors/notFoundError');
 
@@ -42,7 +42,7 @@ const login = (req, res, next) => {
       // создаем токен
       const token = jwt.sign(
         { _id: user._id },
-        NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret',
+        JWT_SECRET,
         { expiresIn: '7d' },
       );
 
